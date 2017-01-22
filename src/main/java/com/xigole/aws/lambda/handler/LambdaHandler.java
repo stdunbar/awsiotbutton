@@ -25,8 +25,8 @@ import com.xigole.aws.lambda.model.IOTResponse;
 
 @SuppressWarnings("unused")
 public class LambdaHandler {
-    private static final String FROM = "scott@xigole.com";
-    private static final String TO = "stdunbar@gmail.com";
+    private static final String FROM = "scott@somedomain.tld";
+    private static final String TO = "scott@somedomain.tld";
 
 
     public IOTResponse handleRequest(IOTButtonRequest request, Context context) throws JsonProcessingException {
