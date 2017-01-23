@@ -25,11 +25,18 @@ import com.xigole.aws.lambda.model.IOTResponse;
 
 @SuppressWarnings("unused")
 public class LambdaHandler {
-    private static final String FROM = "scott@somedomain.tld";
-    private static final String TO = "scott@somedomain.tld";
-
 
     public IOTResponse handleRequest(IOTButtonRequest request, Context context) throws JsonProcessingException {
+
+        String from = System.getenv("FROM_ADDRESS");
+        String to = System.getenv("TO_ADDRESS");
+
+        if( from == null )
+            throw new IllegalArgumentException("FROM_ADDRESS needs to be set as a Lambda environment variable");
+
+        if( to == null )
+            throw new IllegalArgumentException("TO_ADDRESS needs to be set as a Lambda environment variable");
+
         AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
         LambdaLogger lambdaLogger = context.getLogger();
 
@@ -43,8 +50,9 @@ public class LambdaHandler {
         lambdaLogger.log("Max mem allocated: " + context.getMemoryLimitInMB());
         lambdaLogger.log("Time remaining in milliseconds: " + context.getRemainingTimeInMillis());
 
-        if( !isEmailEnabled(TO, simpleEmailServiceClient )) {
-            throw new IllegalStateException("Email to \"" + TO + "\" is not enabled yet");
+        if( !isEmailEnabled(to, simpleEmailServiceClient )) {
+            throw new IllegalStateException("Email to \"" + to +
+                    "\" is not enabled yet - have the user check for an email allowing them to enable it");
         }
 
         String subject = "Java says hello from your IoT button " + request.getSerialNumber();
@@ -52,8 +60,8 @@ public class LambdaHandler {
                 objectMapper.writeValueAsString(request);
 
         simpleEmailServiceClient.sendEmail( new SendEmailRequest()
-                .withSource(TO)
-                .withDestination(new Destination().withToAddresses(TO))
+                .withSource(from)
+                .withDestination(new Destination().withToAddresses(to))
                 .withMessage(new Message()
                         .withBody(new Body(new Content(bodyText)))
                         .withSubject(new Content(subject))));
