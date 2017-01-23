@@ -23,9 +23,23 @@ import com.xigole.aws.lambda.model.IOTButtonRequest;
 import com.xigole.aws.lambda.model.IOTResponse;
 
 
-@SuppressWarnings("unused")
+/**
+ * A simple class to test the Amazon IOT Button with a Lambda backend.  See the README for usage
+ * details.
+ */
+@SuppressWarnings("unused") // make the IDE happy even though we know this class is used.
 public class LambdaHandler {
 
+    /**
+     * This is the method called by the ASW Lambda service.
+     *
+     * @param request a IOTButtonRequest object that has been deserialized by Lambda.
+     * @param context the Lambda context that this method was called with.
+     *
+     * @return an IOTResponse (which is basically just a String) that echos the input.
+     *
+     * @throws JsonProcessingException if there was a problem parsing the input
+     */
     public IOTResponse handleRequest(IOTButtonRequest request, Context context) throws JsonProcessingException {
 
         String from = System.getenv("FROM_ADDRESS");
@@ -37,6 +51,9 @@ public class LambdaHandler {
         if( to == null )
             throw new IllegalArgumentException("TO_ADDRESS needs to be set as a Lambda environment variable");
 
+        //
+        // this will get credentials in a variety of ways
+        //
         AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
         LambdaLogger lambdaLogger = context.getLogger();
 
@@ -50,7 +67,7 @@ public class LambdaHandler {
         lambdaLogger.log("Max mem allocated: " + context.getMemoryLimitInMB());
         lambdaLogger.log("Time remaining in milliseconds: " + context.getRemainingTimeInMillis());
 
-        if( !isEmailEnabled(to, simpleEmailServiceClient )) {
+        if( !isEmailEnabled(to, simpleEmailServiceClient, lambdaLogger )) {
             throw new IllegalStateException("Email to \"" + to +
                     "\" is not enabled yet - have the user check for an email allowing them to enable it");
         }
@@ -73,7 +90,19 @@ public class LambdaHandler {
         return iotResponse;
     }
 
-    private boolean isEmailEnabled(String emailAddress, AmazonSimpleEmailServiceClient simpleEmailServiceClient) {
+    /**
+     * Checks to see if the emailAddress has been validated with SES.  If the address has not been validated
+     * then send the validation request to the email.
+     *
+     * @param emailAddress the email address to check
+     * @param simpleEmailServiceClient the AmazonSimpleEmailServiceClient to use for validation/requesting validation
+     * @param lambdaLogger where to log any messages to
+     *
+     * @return true if the address has been validate, false otherwise.
+     */
+    private boolean isEmailEnabled(String emailAddress,
+                                   AmazonSimpleEmailServiceClient simpleEmailServiceClient,
+                                   LambdaLogger lambdaLogger) {
         GetIdentityVerificationAttributesResult result = simpleEmailServiceClient.getIdentityVerificationAttributes(
                 new GetIdentityVerificationAttributesRequest()
                         .withIdentities(emailAddress));
@@ -82,11 +111,11 @@ public class LambdaHandler {
             IdentityVerificationAttributes identityVerificationAttributes = result.getVerificationAttributes().get(emailAddress);
 
             if (identityVerificationAttributes.getVerificationStatus().equals("Success")) {
-                System.out.println("the email \"" + emailAddress + "\" has been verified");
+                lambdaLogger.log("the email \"" + emailAddress + "\" has been verified");
                 return true;
             }
         } else {
-            System.out.println("the email address \"" + emailAddress + "\" has not been verified - sending email");
+            lambdaLogger.log("the email address \"" + emailAddress + "\" has not been verified - sending verification email");
 
             VerifyEmailIdentityRequest request = new VerifyEmailIdentityRequest()
                     .withEmailAddress(emailAddress);
