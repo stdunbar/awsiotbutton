@@ -31,7 +31,7 @@ import com.xigole.aws.lambda.model.IOTResponse;
 public class LambdaHandler {
 
     /**
-     * This is the method called by the ASW Lambda service.
+     * This is the method called by the AWS Lambda service.
      *
      * @param request a IOTButtonRequest object that has been deserialized by Lambda.
      * @param context the Lambda context that this method was called with.
