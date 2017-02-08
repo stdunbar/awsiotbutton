@@ -20,7 +20,7 @@ However, on the build side this is a simple Maven project.  Simply do a:
 `mvn clean package`
 
 to get a Jar file that can be deployed to Lambda.  If you've cloned this repository and run
-the build then you will need to deploy `target/lambda-1.0-SNAPSHOT.jar` to Lambda.
+the build then you will need to deploy `target/IOTButton-1.0.jar` to Lambda.
 The handler that will be needed in Lambda is `com.hotjoe.aws.lambda.handler.LambdaHandler::handleRequest`
 with the code I have here.
 
