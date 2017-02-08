@@ -1,6 +1,9 @@
-package com.xigole.aws.lambda.model;
+package com.hotjoe.aws.lambda.model;
 
 
+/**
+ * Simple "return" for the Lambda - really only used to send email.
+ */
 public class IOTResponse {
     private String response;
 

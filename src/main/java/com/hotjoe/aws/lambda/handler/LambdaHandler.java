@@ -1,4 +1,4 @@
-package com.xigole.aws.lambda.handler;
+package com.hotjoe.aws.lambda.handler;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
@@ -19,8 +19,8 @@ import com.amazonaws.services.simpleemail.model.VerifyEmailIdentityRequest;
 import com.amazonaws.services.simpleemail.model.VerifyEmailIdentityResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xigole.aws.lambda.model.IOTButtonRequest;
-import com.xigole.aws.lambda.model.IOTResponse;
+import com.hotjoe.aws.lambda.model.IOTButtonRequest;
+import com.hotjoe.aws.lambda.model.IOTResponse;
 
 
 /**

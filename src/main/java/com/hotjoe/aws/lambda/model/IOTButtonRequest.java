@@ -1,6 +1,8 @@
-package com.xigole.aws.lambda.model;
+package com.hotjoe.aws.lambda.model;
 
-
+/**
+ * This class will be deserialized for us by Lambda.
+ */
 public class IOTButtonRequest {
     private String serialNumber;
     private String batteryVoltage;
