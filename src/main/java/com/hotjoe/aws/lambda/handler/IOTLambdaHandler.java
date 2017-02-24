@@ -2,11 +2,11 @@ package com.hotjoe.aws.lambda.handler;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClient;
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
 import com.amazonaws.services.simpleemail.model.Body;
 import com.amazonaws.services.simpleemail.model.Content;
 import com.amazonaws.services.simpleemail.model.Destination;
@@ -28,7 +28,7 @@ import com.hotjoe.aws.lambda.model.IOTResponse;
  * details.
  */
 @SuppressWarnings("unused") // make the IDE happy even though we know this class is used.
-public class LambdaHandler {
+public class IOTLambdaHandler {
 
     /**
      * This is the method called by the AWS Lambda service.
@@ -57,8 +57,9 @@ public class LambdaHandler {
         AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
         LambdaLogger lambdaLogger = context.getLogger();
 
-        AmazonSimpleEmailServiceClient simpleEmailServiceClient = new AmazonSimpleEmailServiceClient(credentialsProvider);
-        simpleEmailServiceClient.setRegion(Region.getRegion(Regions.fromName(System.getenv("AWS_DEFAULT_REGION"))));
+        AmazonSimpleEmailService simpleEmailService =
+                AmazonSimpleEmailServiceClientBuilder.standard()
+                        .withRegion(Regions.fromName(System.getenv("AWS_REGION"))).build();
 
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -67,7 +68,7 @@ public class LambdaHandler {
         lambdaLogger.log("Max mem allocated: " + context.getMemoryLimitInMB());
         lambdaLogger.log("Time remaining in milliseconds: " + context.getRemainingTimeInMillis());
 
-        if( !isEmailEnabled(to, simpleEmailServiceClient, lambdaLogger )) {
+        if( !isEmailEnabled(to, simpleEmailService, lambdaLogger )) {
             throw new IllegalStateException("Email to \"" + to +
                     "\" is not enabled yet - have the user check for an email allowing them to enable it");
         }
@@ -76,7 +77,7 @@ public class LambdaHandler {
         String bodyText = "Java says hello from your IoT Button " + request.getSerialNumber() + ".\nHere is the full event: " +
                 objectMapper.writeValueAsString(request);
 
-        simpleEmailServiceClient.sendEmail( new SendEmailRequest()
+        simpleEmailService.sendEmail( new SendEmailRequest()
                 .withSource(from)
                 .withDestination(new Destination().withToAddresses(to))
                 .withMessage(new Message()
@@ -95,15 +96,15 @@ public class LambdaHandler {
      * then send the validation request to the email.
      *
      * @param emailAddress the email address to check
-     * @param simpleEmailServiceClient the AmazonSimpleEmailServiceClient to use for validation/requesting validation
+     * @param simpleEmailService the AmazonSimpleEmailService to use for validation/requesting validation
      * @param lambdaLogger where to log any messages to
      *
      * @return true if the address has been validate, false otherwise.
      */
     private boolean isEmailEnabled(String emailAddress,
-                                   AmazonSimpleEmailServiceClient simpleEmailServiceClient,
+                                   AmazonSimpleEmailService simpleEmailService,
                                    LambdaLogger lambdaLogger) {
-        GetIdentityVerificationAttributesResult result = simpleEmailServiceClient.getIdentityVerificationAttributes(
+        GetIdentityVerificationAttributesResult result = simpleEmailService.getIdentityVerificationAttributes(
                 new GetIdentityVerificationAttributesRequest()
                         .withIdentities(emailAddress));
 
@@ -119,7 +120,7 @@ public class LambdaHandler {
 
             VerifyEmailIdentityRequest request = new VerifyEmailIdentityRequest()
                     .withEmailAddress(emailAddress);
-            VerifyEmailIdentityResult response = simpleEmailServiceClient.verifyEmailIdentity(request);
+            VerifyEmailIdentityResult response = simpleEmailService.verifyEmailIdentity(request);
             return false;
         }
 
